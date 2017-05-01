@@ -11,4 +11,7 @@ server.
 .. _pg_repack: http://reorg.github.io/pg_repack/
 .. _background worker: https://www.postgresql.org/docs/current/static/bgworker.html
 
+The project is currently in alpha. No, in planning. No, in pre-planning phase.
+We basically wish it existed.
+
 Copyright (c) 2017, The Reorg Development Team
