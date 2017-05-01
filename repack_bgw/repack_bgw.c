@@ -50,6 +50,7 @@ static int  repack_bgw_total_workers = 2;
 
 typedef struct worktable
 {
+    const char *database;
     const char *schema;
     const char *name;
 } worktable;
@@ -159,6 +160,7 @@ repack_bgw_main(Datum main_arg)
 
     table = palloc(sizeof(worktable));
     sprintf(name, "schema%d", index);
+    table->database = pstrdup(MyBgworkerEntry->bgw_extra);
     table->schema = pstrdup(name);
     table->name = pstrdup("counted");
 
@@ -170,10 +172,11 @@ repack_bgw_main(Datum main_arg)
     BackgroundWorkerUnblockSignals();
 
     /* Connect to our database */
-    BackgroundWorkerInitializeConnection("postgres", NULL);
+    BackgroundWorkerInitializeConnection((char *)table->database, NULL);
 
-    elog(LOG, "%s initialized with %s.%s",
-         MyBgworkerEntry->bgw_name, table->schema, table->name);
+    elog(LOG, "%s initialized with %s.%s.%s",
+         MyBgworkerEntry->bgw_name,
+         table->database, table->schema, table->name);
     initialize_repack_bgw(table);
 
     /*
@@ -260,8 +263,8 @@ repack_bgw_main(Datum main_arg)
         ret = SPI_execute(buf.data, false, 0);
 
         if (ret != SPI_OK_UPDATE_RETURNING)
-            elog(FATAL, "cannot select from table %s.%s: error code %d",
-                 table->schema, table->name, ret);
+            elog(FATAL, "cannot select from table %s.%s.%s: error code %d",
+                 table->database, table->schema, table->name, ret);
 
         if (SPI_processed > 0)
         {
@@ -272,9 +275,9 @@ repack_bgw_main(Datum main_arg)
                                               SPI_tuptable->tupdesc,
                                               1, &isnull));
             if (!isnull)
-                elog(LOG, "%s: count in %s.%s is now %d",
+                elog(LOG, "%s: count in %s.%s.%s is now %d",
                      MyBgworkerEntry->bgw_name,
-                     table->schema, table->name, val);
+                     table->database, table->schema, table->name, val);
         }
 
         /*
@@ -340,6 +343,7 @@ _PG_init(void)
     worker.bgw_main = NULL;
     sprintf(worker.bgw_library_name, "repack_bgw");
     sprintf(worker.bgw_function_name, "repack_bgw_main");
+    sprintf(worker.bgw_extra, "postgres");
     worker.bgw_notify_pid = 0;
 
     /*
@@ -360,7 +364,9 @@ _PG_init(void)
 Datum
 repack_bgw_launch(PG_FUNCTION_ARGS)
 {
-    int32       i = PG_GETARG_INT32(0);
+    Name        db  = PG_GETARG_NAME(0);
+    int32       i   = PG_GETARG_INT32(1);
+
     BackgroundWorker worker;
     BackgroundWorkerHandle *handle;
     BgwHandleStatus status;
@@ -374,6 +380,7 @@ repack_bgw_launch(PG_FUNCTION_ARGS)
     sprintf(worker.bgw_library_name, "repack_bgw");
     sprintf(worker.bgw_function_name, "repack_bgw_main");
     snprintf(worker.bgw_name, BGW_MAXLEN, "repack worker %d", i);
+    snprintf(worker.bgw_extra, BGW_EXTRALEN, "%s", NameStr(*db));
     worker.bgw_main_arg = Int32GetDatum(i);
     /* set bgw_notify_pid so that we can use WaitForBackgroundWorkerStartup */
     worker.bgw_notify_pid = MyProcPid;
