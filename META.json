@@ -1,0 +1,41 @@
+{
+   "name": "repack_bgw",
+   "abstract": "Repack Background Worker for PostgreSQL",
+   "description": "Monitor and reduce tables bloat in background",
+   "version": "0.0.1",
+   "maintainer": [
+       "Daniele Varrazzo <daniele.varrazzo@gmail.com>"
+    ],
+   "tags": [ "bloat", "maintenance", "vacuum", "cluster" ],
+   "release_status": "unstable",
+   "license": "bsd",
+   "provides": {
+      "repack_bgw": {
+         "file": "repack_bgw/repack_bgw.control",
+         "version": "0.0.1",
+         "abstract": "Monitor and reduce tables bloat in background"
+      }
+   },
+   "prereqs": {
+      "runtime": {
+         "requires": {
+            "PostgreSQL": "9.6.0"
+         }
+      }
+   },
+   "resources": {
+      "homepage": "http://reorg.github.com/repack_bgw",
+      "bugtracker": {
+         "web": "https://github.com/reorg/repack_bgw/issues"
+      },
+      "repository": {
+          "url": "git://github.com/reorg/repack_bgw.git",
+          "web": "https://github.com/reorg/repack_bgw/",
+          "type": "git"
+      }
+   },
+   "meta-spec": {
+      "version": "1.0.0",
+      "url": "http://pgxn.org/meta/spec.txt"
+   }
+}

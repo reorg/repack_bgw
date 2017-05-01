@@ -1,0 +1,8 @@
+# repack_bgw extension control file
+#
+# Copyright (c) 2017, The Reorg Development Team
+
+comment = 'Repack Background Worker'
+default_version = 'EXTVERSION'
+module_pathname = '$libdir/repack_bgw'
+relocatable = false
